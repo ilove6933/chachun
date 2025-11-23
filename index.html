@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>德妍思上班輔助程式 | The Deyans Assistant</title>
+    <title>德妍思上班輔助程式 | The Deyans Assistant v2.0</title>
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <style>
         /* --- 視覺風格：詭譎魔幻社畜風 --- */
         :root {
             --bg-color: #0d0221;
-            --text-color: #00ff41; /* 螢光綠 */
-            --highlight: #d600ff; /* 魔法紫 */
+            --text-color: #00ff41;
+            --highlight: #d600ff;
             --card-bg: #1a1a2e;
             --border-color: #4e4e50;
+            --warning: #ff0055;
         }
         body {
             background-color: var(--bg-color);
@@ -20,7 +21,6 @@
             font-family: 'Courier New', monospace;
             margin: 0;
             padding: 20px;
-            overflow-x: hidden;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -37,118 +37,68 @@
             max-width: 600px;
             width: 100%;
             text-align: center;
+            z-index: 100;
         }
-        input {
-            background: #000;
-            border: 1px solid var(--highlight);
-            color: var(--text-color);
-            padding: 10px;
-            font-family: inherit;
-        }
+        input { background: #000; border: 1px solid var(--highlight); color: var(--text-color); padding: 10px; }
         button {
-            background: var(--bg-color);
-            border: 1px solid var(--text-color);
-            color: var(--text-color);
-            padding: 10px 20px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.3s;
+            background: var(--bg-color); border: 1px solid var(--text-color); color: var(--text-color);
+            padding: 10px 20px; cursor: pointer; font-weight: bold; transition: 0.3s; margin: 5px;
         }
         button:hover { background: var(--text-color); color: black; box-shadow: 0 0 10px var(--text-color); }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
-
+        
         /* 遊戲區域 */
         #game-area { display: none; width: 100%; max-width: 1000px; flex-direction: column; gap: 20px; }
         
         .zone {
-            border: 1px dashed var(--border-color);
-            padding: 15px;
-            min-height: 120px;
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            flex-wrap: wrap;
-            position: relative;
+            border: 1px dashed var(--border-color); padding: 15px; min-height: 140px;
+            display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; position: relative;
         }
         .zone::before {
-            content: attr(data-label);
-            position: absolute;
-            top: -10px;
-            left: 10px;
-            background: var(--bg-color);
-            padding: 0 5px;
-            color: var(--highlight);
-            font-size: 0.8em;
+            content: attr(data-label); position: absolute; top: -10px; left: 10px;
+            background: var(--bg-color); padding: 0 5px; color: var(--highlight); font-size: 0.8em;
         }
 
         /* 卡牌樣式 */
         .card {
-            width: 80px;
-            height: 110px;
-            background: var(--card-bg);
-            border: 2px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            user-select: none;
-            transition: transform 0.2s;
-            position: relative;
-            text-align: center;
-            font-size: 0.8em;
-            padding: 5px;
+            width: 80px; height: 110px; background: var(--card-bg); border: 2px solid var(--border-color);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            cursor: pointer; user-select: none; transition: transform 0.2s; position: relative;
+            text-align: center; font-size: 0.8em; padding: 5px; box-shadow: 2px 2px 5px #000;
         }
         .card:hover { transform: translateY(-5px); border-color: var(--text-color); }
-        .card.selected { border-color: var(--highlight); box-shadow: 0 0 15px var(--highlight); }
+        .card.selected { border-color: var(--highlight); box-shadow: 0 0 15px var(--highlight); transform: translateY(-10px); }
         .card.hidden { background: repeating-linear-gradient(45deg, #222, #222 10px, #333 10px, #333 20px); color: transparent; }
         
-        .card-type-basic { color: #fff; }
-        .card-type-special { color: var(--highlight); border-style: double; }
+        .card-type-basic { border-bottom: 4px solid #fff; }
+        .card-type-special { border-bottom: 4px solid var(--highlight); color: var(--highlight); }
+        
+        .card-slot { width: 80px; height: 110px; border: 1px dashed #444; display:flex; align-items:center; justify-content:center; color:#444;}
 
-        /* 狀態訊息 */
-        #status-msg {
-            font-size: 1.2em;
-            color: var(--highlight);
-            text-align: center;
-            margin: 10px 0;
-            min-height: 1.5em;
-        }
+        /* 狀態與特效 */
+        #status-msg { font-size: 1.2em; color: var(--highlight); text-align: center; margin: 10px 0; min-height: 1.5em; }
         #score-board { font-size: 1.5em; text-align: center; margin-bottom: 10px; }
-
-        /* 特效 Class */
-        .glitch { animation: glitch-anim 0.3s infinite; }
-        @keyframes glitch-anim {
-            0% { transform: translate(0); }
-            20% { transform: translate(-2px, 2px); }
-            40% { transform: translate(-2px, -2px); }
-            60% { transform: translate(2px, 2px); }
-            80% { transform: translate(2px, -2px); }
-            100% { transform: translate(0); }
+        
+        .log-box {
+            width: 100%; height: 100px; background: #000; border: 1px solid #333; 
+            overflow-y: scroll; font-size: 0.8em; color: #888; padding: 5px; text-align: left;
         }
+        .log-entry { margin-bottom: 2px; border-bottom: 1px solid #222; }
 
     </style>
 </head>
 <body>
 
-    <h1 class="glitch">德妍思上班輔助程式</h1>
+    <h1>德妍思上班輔助程式 <span style="font-size:0.5em; color:#888;">v2.0 Beta</span></h1>
     <div id="score-board">等待連線...</div>
 
     <div id="connection-panel">
         <h3>建立連線 (Connection Setup)</h3>
-        <p>如果你是房主，複製你的 ID 給對手。</p>
-        <p>如果你是對手，輸入房主 ID 並連線。</p>
-        <br>
         <div>
-            <span>我的 ID: </span>
-            <input type="text" id="my-peer-id" readonly>
-            <button onclick="copyId()">複製</button>
+            <span>我的 ID: </span> <input type="text" id="my-peer-id" readonly> <button onclick="copyId()">複製</button>
         </div>
         <br>
         <div>
-            <span>對手 ID: </span>
-            <input type="text" id="opponent-peer-id" placeholder="貼上對手 ID">
-            <button onclick="connectToPeer()">連線</button>
+            <span>對手 ID: </span> <input type="text" id="opponent-peer-id" placeholder="貼上對手 ID"> <button onclick="connectToPeer()">連線</button>
         </div>
         <p id="conn-status" style="color: yellow;">狀態: 初始化中...</p>
     </div>
@@ -156,57 +106,67 @@
     <div id="game-area">
         <div id="status-msg">準備中...</div>
 
-        <div class="zone" data-label="主管 (對手手牌)">
-            <div id="enemy-hand" style="display:flex; gap:10px;"></div>
+        <div class="zone" data-label="主管 (對手手牌數)">
+            <div id="enemy-hand-count" style="font-size: 2em; color: #555;">? 張</div>
         </div>
         
-        <div class="zone" data-label="會議桌 (戰場)" style="min-height: 150px; align-items: center;">
-            <div id="battle-area" style="display:flex; gap:50px;">
-                <div id="enemy-field" class="card hidden"></div>
-                <div style="font-size: 2em;">VS</div>
-                <div id="my-field" class="card" style="border: 2px dashed #555;">待出牌</div>
+        <div class="zone" data-label="會議桌 (戰場)" style="min-height: 180px; align-items: center;">
+            <div style="display:flex; flex-direction:column; align-items:center; gap:5px;">
+                <div class="card-slot" id="enemy-slot-basic">一般</div>
+                <div class="card-slot" id="enemy-slot-special" style="border-color:purple; height:60px;">特殊</div>
+            </div>
+
+            <div style="font-size: 2em; margin: 0 20px;">VS</div>
+
+            <div style="display:flex; flex-direction:column; align-items:center; gap:5px;">
+                <div class="card-slot" id="my-slot-basic">待出牌</div>
+                <div class="card-slot" id="my-slot-special" style="border-color:purple; height:60px;">無</div>
             </div>
         </div>
 
-        <div class="zone" data-label="社畜 (你的手牌)">
-            <div id="my-hand" style="display:flex; gap:10px;"></div>
-        </div>
+        <button id="commit-btn" onclick="commitTurn()" style="align-self: center; display:none; width: 200px; font-size: 1.2em;">提交專案 (出牌)</button>
 
-        <button id="commit-btn" onclick="commitTurn()" style="align-self: center; display:none;">提交專案 (確認出牌)</button>
+        <div class="zone" data-label="社畜 (你的手牌 - 點選1張一般卡 + 可選1張特殊卡)">
+            <div id="my-hand" style="display:flex; gap:10px; flex-wrap:wrap;"></div>
+        </div>
+        
+        <div class="log-box" id="game-log"></div>
     </div>
 
     <script>
-        // --- 遊戲資料結構 ---
+        // --- 遊戲資料 ---
         const CARDS = {
-            BASIC: ['頑固之石', '窒息文書', '背刺利刃'], // Rock, Paper, Scissors
+            BASIC: ['頑固之石', '窒息文書', '背刺利刃'],
             SPECIAL: ['混亂指令', '監控漏洞', '惡意交換', '全盤稽核']
         };
+
+        // 規則：剪刀(2) > 布(1) > 石頭(0) > 剪刀(2)
+        // 為了方便比對，定義：石=0, 布=1, 剪=2
+        const TYPE_MAP = { '頑固之石': 0, '窒息文書': 1, '背刺利刃': 2 };
         
         let gameState = {
             myHand: [],
-            mySelection: null,
-            opponentHasCommitted: false,
+            selectedBasicIdx: null,
+            selectedSpecialIdx: null,
+            opponentCommitted: false,
             round: 1,
             myScore: 0,
             enemyScore: 0,
-            isHost: false,
-            overtime: false
+            isHost: false
         };
 
         let peer = null;
         let conn = null;
 
-        // --- 初始化 PeerJS ---
+        // --- 連線邏輯 ---
         function initPeer() {
-            peer = new Peer(null, { debug: 2 });
-
+            peer = new Peer(null, { debug: 1 });
             peer.on('open', (id) => {
                 document.getElementById('my-peer-id').value = id;
                 document.getElementById('conn-status').innerText = "狀態: 等待連線...";
             });
-
             peer.on('connection', (c) => {
-                if(conn) { c.close(); return; } // 只允許一個連線
+                if(conn) { c.close(); return; }
                 conn = c;
                 gameState.isHost = true;
                 setupConnection();
@@ -225,234 +185,358 @@
 
         function setupConnection() {
             conn.on('open', () => {
-                document.getElementById('conn-status').innerText = "狀態: 連線成功！";
                 document.getElementById('connection-panel').style.display = 'none';
                 document.getElementById('game-area').style.display = 'flex';
-                if(!gameState.isHost) {
-                    document.getElementById('status-msg').innerText = "等待房主發牌...";
-                }
+                log("連線建立成功。");
             });
 
             conn.on('data', (data) => {
                 handleData(data);
             });
+            conn.on('close', () => alert("對手斷線，請重新整理"));
+        }
+
+        function log(msg) {
+            const box = document.getElementById('game-log');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerText = `> ${msg}`;
+            box.prepend(entry);
+        }
+
+        // --- 遊戲核心 ---
+
+        function generateCard(type) {
+            const list = type === 'BASIC' ? CARDS.BASIC : CARDS.SPECIAL;
+            const name = list[Math.floor(Math.random() * list.length)];
+            return { type: type, name: name, id: Math.random().toString(36).substr(2, 9) };
+        }
+
+        function startGame() {
+            // 房主生成初始手牌
+            const p1Hand = [];
+            const p2Hand = [];
             
-            conn.on('close', () => alert("對手斷線"));
+            for(let i=0; i<5; i++) { p1Hand.push(generateCard('BASIC')); p2Hand.push(generateCard('BASIC')); }
+            for(let i=0; i<3; i++) { p1Hand.push(generateCard('SPECIAL')); p2Hand.push(generateCard('SPECIAL')); }
+
+            gameState.myHand = p1Hand;
+            renderHand();
+            startTurn();
+            
+            conn.send({ type: 'START', hand: p2Hand });
         }
 
         function handleData(data) {
-            console.log("Received:", data);
             switch(data.type) {
-                case 'START_GAME':
-                    // 接收初始手牌
+                case 'START':
                     gameState.myHand = data.hand;
-                    gameState.round = 1;
                     renderHand();
                     startTurn();
                     break;
                 case 'COMMIT':
-                    gameState.opponentHasCommitted = true;
-                    document.getElementById('enemy-field').innerText = "已蓋牌";
-                    checkShowdown(data.card);
+                    gameState.opponentCommitted = true;
+                    gameState.opCommitData = data; // 暫存對手出的牌
+                    document.getElementById('enemy-slot-basic').innerText = "已蓋牌";
+                    document.getElementById('enemy-slot-basic').className = "card hidden";
+                    if(data.hasSpecial) {
+                        document.getElementById('enemy-slot-special').innerText = "特殊卡";
+                        document.getElementById('enemy-slot-special').className = "card hidden card-type-special";
+                    }
+                    log("對手已出牌！");
+                    checkShowdown();
                     break;
                 case 'RESULT':
-                    // 雙方同步結果
                     showResult(data);
+                    break;
+                case 'SWAP_REQUEST':
+                    // 對手發動惡意交換，我被搶了一張牌
+                    handleSwapEffect(data.giveCard, data.stealIndex);
+                    break;
+                case 'PEEK_REQUEST':
+                    // 對手發動看透
+                    conn.send({ type: 'PEEK_RESPONSE', hand: gameState.myHand });
+                    log("警告：對手使用了【全盤稽核】，你的手牌被看光了！");
+                    break;
+                case 'PEEK_RESPONSE':
+                    let handStr = data.hand.map(c => c.name).join(', ');
+                    alert(`【全盤稽核結果】\n對手手牌：\n${handStr}`);
+                    log("你偷看了對手的所有手牌。");
                     break;
             }
         }
 
-        // --- 遊戲邏輯 ---
+        function startTurn() {
+            gameState.selectedBasicIdx = null;
+            gameState.selectedSpecialIdx = null;
+            gameState.opponentCommitted = false;
+            gameState.opCommitData = null;
+            
+            // 檢查是否需要加班 (如果沒一般卡了)
+            const basicCount = gameState.myHand.filter(c => c.type === 'BASIC').length;
+            if (basicCount === 0) {
+                log("加班機制觸發：手牌中沒有一般卡，系統補發一張！");
+                gameState.myHand.push(generateCard('BASIC'));
+            }
 
-        function startGame() {
-            // 只有房主負責發牌
-            const hand1 = generateHand();
-            const hand2 = generateHand();
-
-            // 發給自己
-            gameState.myHand = hand1;
             renderHand();
-            startTurn();
-
-            // 發給對手
-            conn.send({ type: 'START_GAME', hand: hand2 });
+            
+            document.getElementById('status-msg').innerText = `第 ${gameState.round} 回合：請出牌`;
+            document.getElementById('commit-btn').style.display = 'none';
+            
+            // 重置戰場UI
+            resetFieldUI('my');
+            resetFieldUI('enemy');
         }
 
-        function generateHand() {
-            let hand = [];
-            for(let i=0; i<5; i++) hand.push({type: 'BASIC', name: CARDS.BASIC[Math.floor(Math.random()*3)]});
-            for(let i=0; i<3; i++) hand.push({type: 'SPECIAL', name: CARDS.SPECIAL[Math.floor(Math.random()*4)]});
-            return hand;
+        function resetFieldUI(who) {
+            document.getElementById(`${who}-slot-basic`).className = 'card-slot';
+            document.getElementById(`${who}-slot-basic`).innerText = '待出牌';
+            document.getElementById(`${who}-slot-special`).className = 'card-slot';
+            document.getElementById(`${who}-slot-special`).innerText = '無';
+            document.getElementById(`${who}-slot-special`).style.borderColor = 'purple';
         }
 
         function renderHand() {
             const handDiv = document.getElementById('my-hand');
             handDiv.innerHTML = '';
+            
             gameState.myHand.forEach((card, index) => {
                 const el = document.createElement('div');
                 el.className = `card card-type-${card.type.toLowerCase()}`;
+                if(index === gameState.selectedBasicIdx || index === gameState.selectedSpecialIdx) {
+                    el.classList.add('selected');
+                }
                 el.innerHTML = `<span>${card.name}</span>`;
-                el.onclick = () => selectCard(index, el);
+                el.onclick = () => selectCard(index);
                 handDiv.appendChild(el);
             });
-
-            // 渲染對手手牌背面
-            const enemyHandDiv = document.getElementById('enemy-hand');
-            enemyHandDiv.innerHTML = '';
-            for(let i=0; i<gameState.myHand.length; i++) { // 暫時假設數量一樣
-                 const el = document.createElement('div');
-                 el.className = 'card hidden';
-                 enemyHandDiv.appendChild(el);
-            }
-            updateScoreBoard();
+            
+            // 更新對手手牌數顯示 (模擬)
+            // 實際連線中我們不知道對手剩幾張，這裡先不更新或顯示固定
         }
 
-        function selectCard(index, el) {
+        function selectCard(index) {
             const card = gameState.myHand[index];
-            if(card.type !== 'BASIC') {
-                alert("目前版本僅支援出一般卡 (特殊卡功能開發中)");
-                return;
+            
+            if (card.type === 'BASIC') {
+                // 如果已經選了這張，取消選擇
+                if (gameState.selectedBasicIdx === index) gameState.selectedBasicIdx = null;
+                else gameState.selectedBasicIdx = index;
+            } else {
+                // 特殊卡
+                if (gameState.selectedSpecialIdx === index) gameState.selectedSpecialIdx = null;
+                else gameState.selectedSpecialIdx = index;
             }
             
-            // 清除其他選擇
-            document.querySelectorAll('#my-hand .card').forEach(c => c.classList.remove('selected'));
-            el.classList.add('selected');
-            gameState.mySelection = { card: card, index: index };
-            
-            const myField = document.getElementById('my-field');
-            myField.innerText = card.name;
-            myField.className = `card card-type-basic`;
-            
-            document.getElementById('commit-btn').style.display = 'block';
+            renderHand();
+            updatePreview();
         }
 
-        function startTurn() {
-            gameState.mySelection = null;
-            gameState.opponentHasCommitted = false;
-            document.getElementById('status-msg').innerText = `第 ${gameState.round} 回合：請選擇一張一般卡`;
-            document.getElementById('commit-btn').style.display = 'none';
-            document.getElementById('my-field').innerText = "待出牌";
-            document.getElementById('my-field').className = "card";
-            document.getElementById('enemy-field').className = "card hidden";
-            document.getElementById('enemy-field').innerText = "";
+        function updatePreview() {
+            const basicSlot = document.getElementById('my-slot-basic');
+            const specialSlot = document.getElementById('my-slot-special');
+            const btn = document.getElementById('commit-btn');
+
+            if (gameState.selectedBasicIdx !== null) {
+                const c = gameState.myHand[gameState.selectedBasicIdx];
+                basicSlot.className = 'card card-type-basic';
+                basicSlot.innerText = c.name;
+                btn.style.display = 'block';
+            } else {
+                basicSlot.className = 'card-slot';
+                basicSlot.innerText = '待出牌';
+                btn.style.display = 'none';
+            }
+
+            if (gameState.selectedSpecialIdx !== null) {
+                const c = gameState.myHand[gameState.selectedSpecialIdx];
+                specialSlot.className = 'card card-type-special';
+                specialSlot.innerText = c.name;
+            } else {
+                specialSlot.className = 'card-slot';
+                specialSlot.innerText = '無';
+            }
         }
 
         function commitTurn() {
-            if(!gameState.mySelection) return;
-            
-            // 移除手牌
-            gameState.myHand.splice(gameState.mySelection.index, 1);
-            renderHand(); // 重繪移除後的
-            document.getElementById('commit-btn').style.display = 'none';
-            document.getElementById('status-msg').innerText = "已出牌，等待對手...";
+            if (gameState.selectedBasicIdx === null) return;
 
-            // 傳送給對手 (為了防作弊，這裡其實應該只傳送 'I_COMMITTED'，最後再傳內容，但為了簡化，我們先傳內容但前端不顯示)
-            conn.send({ type: 'COMMIT', card: gameState.mySelection.card });
-            
-            // 如果我是房主，且我也選了，對手也選了，就計算結果
-            if (gameState.opponentSelection && gameState.isHost) {
-                 resolveRound();
+            // 取出卡牌資料
+            let basicCard = gameState.myHand[gameState.selectedBasicIdx];
+            let specialCard = gameState.selectedSpecialIdx !== null ? gameState.myHand[gameState.selectedSpecialIdx] : null;
+
+            // 1. 處理【混亂指令】效果：如果選了混亂指令，強制隨機換一般卡
+            if (specialCard && specialCard.name === '混亂指令') {
+                log("發動【混亂指令】：你的一般卡被隨機替換了！");
+                basicCard = generateCard('BASIC'); // 產生新的隨機卡
             }
+
+            // 2. 處理【全盤稽核】：發送請求
+            if (specialCard && specialCard.name === '全盤稽核') {
+                conn.send({ type: 'PEEK_REQUEST' });
+            }
+
+            // 3. 移除手牌 (注意 index 偏移問題，先移除後面的)
+            const indicesToRemove = [gameState.selectedBasicIdx, gameState.selectedSpecialIdx].filter(i => i !== null).sort((a,b)=>b-a);
+            indicesToRemove.forEach(i => gameState.myHand.splice(i, 1));
+            
+            renderHand();
+            document.getElementById('commit-btn').style.display = 'none';
+            document.getElementById('status-msg').innerText = "已提交，等待對手...";
+
+            // 傳送出牌資訊
+            gameState.myCommitData = {
+                basic: basicCard,
+                special: specialCard,
+                hasSpecial: !!specialCard
+            };
+
+            conn.send({
+                type: 'COMMIT',
+                basic: basicCard,
+                special: specialCard,
+                hasSpecial: !!specialCard
+            });
+
+            checkShowdown();
         }
-        
-        // 暫存對手的出牌 (如果是後手)
-        function checkShowdown(enemyCard) {
-            gameState.opponentSelection = enemyCard;
-            if(gameState.mySelection) {
-                // 雙方都出牌了
+
+        function checkShowdown() {
+            if (gameState.myCommitData && gameState.opponentCommitted) {
+                // 雙方都出了，如果是 Host 進行結算
                 if (gameState.isHost) {
-                    resolveRound();
+                    setTimeout(resolveRound, 500);
                 }
-            } else {
-                 document.getElementById('status-msg').innerText = "對手已出牌！輪到你了！";
             }
         }
 
         function resolveRound() {
-            // 只有房主計算
-            const myC = gameState.mySelection.card.name;
-            const opC = gameState.opponentSelection.name;
+            const p1 = gameState.myCommitData; // Host
+            const p2 = gameState.opCommitData; // Guest (Received)
+
             let winner = 'draw';
             
-            // 簡易判斷 (剪石布)
-            if (myC === opC) winner = 'draw';
-            else if (
-                (myC === '頑固之石' && opC === '背刺利刃') ||
-                (myC === '背刺利刃' && opC === '窒息文書') ||
-                (myC === '窒息文書' && opC === '頑固之石')
-            ) winner = 'host';
+            // 判定勝負
+            const v1 = TYPE_MAP[p1.basic.name];
+            const v2 = TYPE_MAP[p2.basic.name];
+
+            if (v1 === v2) winner = 'draw';
+            else if ((v1 === 0 && v2 === 2) || (v1 === 1 && v2 === 0) || (v1 === 2 && v2 === 1)) winner = 'host';
             else winner = 'guest';
 
+            // 處理【惡意交換】：如果有人出交換卡，執行交換邏輯
+            // 這裡簡化：隨機從雙方牌庫抓一張交換 (需後端同步太複雜，這裡模擬)
+            // 為了測試方便：如果有出交換卡，直接觸發 "Swap Request" 給對方
+            if (p1.special && p1.special.name === '惡意交換') {
+                // Host 發動交換：搶 Guest 一張，給 Guest 一張垃圾
+                const giveCard = generateCard('BASIC');
+                conn.send({ type: 'SWAP_REQUEST', giveCard: giveCard, stealIndex: 0 }); // 偷第一張
+                // Host 自己加一張隨機 (模擬搶來的)
+                gameState.myHand.push(generateCard('BASIC'));
+            }
+            if (p2.special && p2.special.name === '惡意交換') {
+                // Guest 發動交換，Host 被搶
+                const giveCard = generateCard('BASIC');
+                handleSwapEffect(giveCard, 0); 
+                // Guest 那邊自己會加
+            }
+
+            // 傳送結果
             const resultData = {
                 type: 'RESULT',
-                hostCard: myC,
-                guestCard: opC,
+                hostBasic: p1.basic,
+                hostSpecial: p1.special,
+                guestBasic: p2.basic,
+                guestSpecial: p2.special,
                 winner: winner,
                 round: gameState.round
             };
-            
-            showResult(resultData);
+
             conn.send(resultData);
+            showResult(resultData);
+        }
+
+        function handleSwapEffect(giveCard, index) {
+            // 被搶牌
+            if (gameState.myHand.length > 0) {
+                const stolen = gameState.myHand.shift(); // 移除第一張
+                log(`【惡意交換】發動！你失去了 ${stolen.name}，收到了一張 ${giveCard.name}`);
+            }
+            gameState.myHand.push(giveCard);
+            renderHand();
         }
 
         function showResult(data) {
             // 顯示雙方卡牌
-            const myField = document.getElementById('my-field');
-            const enemyField = document.getElementById('enemy-field');
-            
-            // 如果我是房主
-            if(gameState.isHost) {
-                enemyField.innerText = data.guestCard;
-                enemyField.classList.remove('hidden');
-                enemyField.classList.add('card-type-basic');
-                if(data.winner === 'host') gameState.myScore++;
-                if(data.winner === 'guest') gameState.enemyScore++;
+            const enemyBasicSlot = document.getElementById('enemy-slot-basic');
+            const enemySpecialSlot = document.getElementById('enemy-slot-special');
+
+            const enemyData = gameState.isHost ? 
+                { b: data.guestBasic, s: data.guestSpecial } : 
+                { b: data.hostBasic, s: data.hostSpecial };
+
+            enemyBasicSlot.className = 'card card-type-basic';
+            enemyBasicSlot.innerText = enemyData.b.name;
+            enemyBasicSlot.classList.remove('hidden');
+
+            if (enemyData.s) {
+                enemySpecialSlot.className = 'card card-type-special';
+                enemySpecialSlot.innerText = enemyData.s.name;
+                enemySpecialSlot.classList.remove('hidden');
+                log(`對手使用了特殊卡：${enemyData.s.name}`);
+            }
+
+            // 更新分數
+            if (data.winner === 'host') {
+                gameState.isHost ? gameState.myScore++ : gameState.enemyScore++;
+            } else if (data.winner === 'guest') {
+                gameState.isHost ? gameState.enemyScore++ : gameState.myScore++;
             } else {
-                // 如果我是客端
-                myField.innerText = data.guestCard; // 我出的
-                enemyField.innerText = data.hostCard; // 對手出的
-                enemyField.classList.remove('hidden');
-                enemyField.classList.add('card-type-basic');
-                if(data.winner === 'guest') gameState.myScore++;
-                if(data.winner === 'host') gameState.enemyScore++;
+                log("平手！觸發加班機制：雙方各獲得一張新的一般卡。");
+                gameState.myHand.push(generateCard('BASIC')); // 平手補牌
             }
             
             updateScoreBoard();
             
-            let msg = data.winner === 'draw' ? "平手！" : (
-                (gameState.isHost && data.winner === 'host') || (!gameState.isHost && data.winner === 'guest') 
-                ? "你贏了本回合！" : "你輸了本回合..."
-            );
-            
-            document.getElementById('status-msg').innerText = msg;
+            // 處理【監控漏洞】：如果有人出顯示卡，在 Log 提示
+            if (data.hostSpecial && data.hostSpecial.name === '監控漏洞') {
+                if (!gameState.isHost) alert(`對手發動【監控漏洞】，正在觀察你的佈局...`);
+            }
+            if (data.guestSpecial && data.guestSpecial.name === '監控漏洞') {
+                if (gameState.isHost) alert(`對手發動【監控漏洞】，正在觀察你的佈局...`);
+            }
 
-            // 3秒後下一回合
+            // 判斷勝負
+            let roundResult = "平手";
+            if (gameState.isHost) {
+                if(data.winner === 'host') roundResult = "勝利";
+                if(data.winner === 'guest') roundResult = "敗北";
+            } else {
+                if(data.winner === 'guest') roundResult = "勝利";
+                if(data.winner === 'host') roundResult = "敗北";
+            }
+            document.getElementById('status-msg').innerText = `結果：${roundResult}！`;
+
             setTimeout(() => {
                 gameState.round++;
-                // 判斷遊戲結束
-                if(gameState.myScore >= 3) alert("恭喜獲勝！遊戲結束。");
-                else if(gameState.enemyScore >= 3) alert("慘敗...加班去吧。");
-                else {
-                     // 清除場上
-                     gameState.opponentSelection = null;
-                     startTurn();
-                }
+                if (gameState.myScore >= 3) alert("恭喜！你贏得了這場社畜戰爭！");
+                else if (gameState.enemyScore >= 3) alert("敗北...準備無薪加班吧。");
+                else startTurn();
             }, 3000);
         }
 
         function updateScoreBoard() {
             document.getElementById('score-board').innerText = 
-                `我方 ${gameState.myScore} - ${gameState.enemyScore} 對方 (R${gameState.round})`;
+                `我方 ${gameState.myScore} - ${gameState.enemyScore} 對方 (Round ${gameState.round})`;
         }
 
         function copyId() {
             const copyText = document.getElementById("my-peer-id");
             copyText.select();
             document.execCommand("copy");
-            alert("ID 已複製");
         }
 
-        // 啟動
         initPeer();
 
     </script>
